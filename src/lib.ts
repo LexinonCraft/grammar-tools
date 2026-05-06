@@ -1,127 +1,105 @@
-import { match } from "variant"
+import {v4 as uuidv4} from "uuid"
 
-export type TransformationOption = "epsilon" | "chains" | "shorten" | "literals" | "cnf" | "useless" | "unreachable" | "cyk"
-
-export interface Config {
-    grammar: string
-    startSymbol: string
-    transformationOptions: Record<TransformationOption, boolean>
-    word: string
+export type RightSide = {
+    type: "twoVariables"
+    var1: string
+    var2: string
+} | {
+    type: "literal"
+    char: string
 }
 
-export type Symbol = {type: "variable", identifier: string} | {type: "literal", char: string}
-
-export type Sequence = Symbol[]
-
-export interface GrammarLine {
+export type Production = {
+    uuid: string
     leftSideVariable: string
-    rightSideSequences: Sequence[]
+    rightSide: RightSide
 }
 
-export interface Grammar {
-    startVariable: string
-    lines: GrammarLine[]
-}
-
-type GrammarParsingState =
-| "awaitingLeftSideVariable"
-| "readingLeftSideVariable"
-| "awaitingArrow"
-| "expectingArrowHead"
-| "awaitingRightSideSymbol"
-| "readingRightSideVariable"
-| "readingRightSideLiteral"
-
-const validVariableCharacters = "[A-Za-z0-9]"
-
-interface GrammarParsingSuccess {
-    type: "success"
-    grammar: Grammar
-}
-
-interface GrammerParsingFailure {
-    type: "failure"
-    error: string
-}
-
-type GrammarParsingResult = GrammarParsingSuccess | GrammerParsingFailure
-
-export function parseGrammar(grammarInput: string, startVariable: string): GrammarParsingResult {
-    let cursor = 0
-    let row = 0
-    let column = 0
-    let state: GrammarParsingState = "awaitingLeftSideVariable"
-    let readString = ""
-    let line: Partial<GrammarLine> = {}
-    let grammar: Grammar = {
-        startVariable,
-        lines: []
-    }
-
-    function unexpectedSymbolError(): GrammerParsingFailure {
-        return {
-            type: "failure",
-            error: `Unexpected symbol at ${row + 1}:${column + 1}`
-        }
-    }
-
-    while (cursor < grammarInput.length) {
-        const char = grammarInput[cursor]
-
-        const actions: Record<GrammarParsingState, () => void> = {
-            awaitingLeftSideVariable: () => {
-                if (new RegExp(validVariableCharacters).test(char)) {
-                    readString = char
-                    state = "readingLeftSideVariable"
-                } else if (!new RegExp("\\s").test(char))
-                    return unexpectedSymbolError()
-            },
-            readingLeftSideVariable: () => {
-                if (new RegExp(validVariableCharacters).test(char))
-                    readString += char
-                else if (new RegExp("\\-").test(char)) {
-                    line.leftSideVariable = readString
-                    state = "expectingArrowHead"
-                } else if(new RegExp("\\s").test(char)) {
-                    line.leftSideVariable = readString
-                    state = "awaitingArrow"
-                } else
-                    return unexpectedSymbolError()
-            },
-            awaitingArrow: () => {
-                if (new RegExp("-"))
-                    state = "expectingArrowHead"
-                else if (!new RegExp("\\s"))
-                    return unexpectedSymbolError()
-            },
-            expectingArrowHead: () => {
-                if (new RegExp(">"))
-                    state = "awaitingRightSideSymbol"
-                else
-                    return unexpectedSymbolError()
-            },
-            awaitingRightSideSymbol: () => {
-
-            },
-            readingRightSideVariable: function (): void {
-                throw new Error("Function not implemented.")
-            },
-            readingRightSideLiteral: function (): void {
-                throw new Error("Function not implemented.")
-            }
-        }
-        actions[state]()
-
-        cursor++
-        row++
-        if (char == "\n" || char == "\r") {
-            row++
-            column = 0
-        }
-    }
-
+export function newProduction(leftSideVariable: string, rightSide: RightSide): Production {
     return {
-        type: "success",
-        grammar
+        uuid: uuidv4(),
+        leftSideVariable,
+        rightSide
     }
+}
+
+export type Grammar = {
+    startSymbol: string
+    produceEpsilon: boolean
+    productions: Production[]
+}
+
+function validateVariableName(variable: string) {
+    return variable.length != 0 && !new RegExp(".*\s.*").test(variable)
+}
+
+export function validateGrammar(grammar: Grammar) {
+    if (!validateVariableName(grammar.startSymbol))
+        return false;
+
+    return grammar.productions.every((production) => {
+        if (production.rightSide.type == "twoVariables")
+            return validateVariableName(production.rightSide.var1) && validateVariableName(production.rightSide.var2)
+        else
+            return production.rightSide.char.length == 1
+    })
+}
+
+export type CYKRef = {
+    type: "twoVariables"
+    var1: string
+    var2: string
+    splitLength: number
+} | {
+    type: "literal"
+    char: string
+}
+
+export type CYKTableCell = {
+    variables: string[]
+    refs: Record<string, CYKRef>
+}
+
+export type CYKResult = {
+    table: CYKTableCell[][]
+    wordCanBeDerived: boolean
+}
+
+export function cyk(grammar: Grammar, word: string): CYKResult {
+    if (word.length == 0)
+        return {
+            table: [],
+            wordCanBeDerived: grammar.produceEpsilon
+        }
+
+    const table: (CYKTableCell | undefined)[][] = Array.apply(null, Array(word.length)).map((_, i) => Array(word.length - i).fill(undefined))
+    console.log(JSON.stringify(table))
+
+    for (let i = 0; i < word.length; i++) {
+        let refs: Record<string, CYKRef> = {}
+
+        grammar.productions.forEach((production) => {
+            if (!(production.leftSideVariable in refs) && production.rightSide.type == "literal" && production.rightSide.char == word[i])
+                refs[production.leftSideVariable] = { ...production.rightSide }
+        })
+
+        table[0][i] = { variables: Object.keys(refs), refs }
+    }
+
+    for (let i = 1; i < word.length; i++)
+        for (let j = 0; j < word.length - i; j++) {
+            let refs: Record<string, CYKRef> = {}
+
+            for (let k = 0; k < i; k++)
+                grammar.productions.forEach((production) => {
+                    if (!(production.leftSideVariable in refs) && production.rightSide.type == "twoVariables" && production.rightSide.var1 in (table[k][j] as CYKTableCell).refs && production.rightSide.var2 in (table[i - k - 1][j + k + 1] as CYKTableCell).refs)
+                        refs[production.leftSideVariable] = { ...production.rightSide, splitLength: k }
+                })
+
+            table[i][j] = { variables: Object.keys(refs), refs }
+        }
+
+    const wordCanBeDerived = grammar.startSymbol in (table[word.length - 1][0] as CYKTableCell).refs
+
+    return { table: table as CYKTableCell[][], wordCanBeDerived }
 }

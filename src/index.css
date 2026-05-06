@@ -1,5 +1,86 @@
-.checkbox-grid {
-    display: grid;
-    grid-template-columns: 50px auto;
-    gap: 5;
+* {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: lightgray;
+}
+
+.card {
+    background-color: white;
+    border: solid 1px gray;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.input-form {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 30px;
+}
+
+.input-form-field {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    gap: 8px;
+}
+
+.input-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+
+.table-cell {
+    width: 100px;
+    height: 100px;
+    border: 1px solid;
+    border-collapse: collapse;
+    text-align: center;
+    vertical-align: middle;
+    user-select: none;
+}
+
+.unused-cell {
+    background-color: gray;
+}
+
+.variable {
+    background-color: lightgray;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: solid 2px;
+    border-color: gray;
+}
+
+.selected-variable {
+    color: red;
+    border-color: red;
+    background-color: yellow;
+}
+
+.referred-variable {
+    color: green;
+    border-color: green;
+    background-color: yellow;
+}
+
+.referred-word-char {
+    color: blue;
+    background-color: yellow;
+}
+
+.variables-list {
+    display: inline-flex;
+    flex-direction: row;
+    gap: 10px;
 }
