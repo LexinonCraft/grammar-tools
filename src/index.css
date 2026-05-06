@@ -1,0 +1,5 @@
+.checkbox-grid {
+    display: grid;
+    grid-template-columns: 50px auto;
+    gap: 5;
+}
