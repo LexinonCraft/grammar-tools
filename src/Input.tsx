@@ -93,9 +93,9 @@ export default function Input({ run, running }: { run: (grammar: Grammar, word: 
                     <ProductionWidget production={production} setProduction={updateProduction} deleteProduction={() => deleteProduction(production)} key={production.uuid} />
                 )}
                 <div className="input-buttons">
-                    <button onClick={() => setProduceEpsilon(true)} disabled={produceEpsilon}>Add rule {startSymbol} &rarr; &epsilon;</button>
-                    <button onClick={() => addProductionWithTwoVariables()}>Add rule of form <code>A</code> &rarr; <code>BC</code></button>
-                    <button onClick={() => addProductionWithLiteral()}>Add rule of form <code>A</code> &rarr; <code>b</code></button>
+                    <button onClick={() => setProduceEpsilon(true)} disabled={produceEpsilon}>Add production {startSymbol} &rarr; &epsilon;</button>
+                    <button onClick={() => addProductionWithTwoVariables()}>Add production of form <code>A</code> &rarr; <code>BC</code></button>
+                    <button onClick={() => addProductionWithLiteral()}>Add production of form <code>A</code> &rarr; <code>b</code></button>
                 </div>
             </div>
             <div className="input-form-field">

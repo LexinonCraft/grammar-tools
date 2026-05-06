@@ -40,6 +40,7 @@ export function validateGrammar(grammar: Grammar) {
     return grammar.productions.every((production) => {
         if (production.rightSide.type == "twoVariables")
             return validateVariableName(production.rightSide.var1) && validateVariableName(production.rightSide.var2)
+                && production.rightSide.var1 != grammar.startSymbol && production.rightSide.var2 != grammar.startSymbol
         else
             return production.rightSide.char.length == 1
     })
@@ -63,13 +64,15 @@ export type CYKTableCell = {
 export type CYKResult = {
     table: CYKTableCell[][]
     wordCanBeDerived: boolean
+    uuid: string
 }
 
 export function cyk(grammar: Grammar, word: string): CYKResult {
     if (word.length == 0)
         return {
             table: [],
-            wordCanBeDerived: grammar.produceEpsilon
+            wordCanBeDerived: grammar.produceEpsilon,
+            uuid: uuidv4()
         }
 
     const table: (CYKTableCell | undefined)[][] = Array.apply(null, Array(word.length)).map((_, i) => Array(word.length - i).fill(undefined))
@@ -101,5 +104,5 @@ export function cyk(grammar: Grammar, word: string): CYKResult {
 
     const wordCanBeDerived = grammar.startSymbol in (table[word.length - 1][0] as CYKTableCell).refs
 
-    return { table: table as CYKTableCell[][], wordCanBeDerived }
+    return { table: table as CYKTableCell[][], wordCanBeDerived, uuid: uuidv4() }
 }

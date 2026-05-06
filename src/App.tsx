@@ -24,7 +24,7 @@ export default function App() {
         </div>
         <Input run={run} running={isRunningCYK} />
         {result &&
-            <Result grammar={grammar as Grammar} word={word as string} result={result} />
+            <Result grammar={grammar as Grammar} word={word as string} result={result} key={result.uuid} />
         }
     </>
 }
