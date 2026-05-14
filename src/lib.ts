@@ -40,7 +40,7 @@ export function validateGrammar(grammar: Grammar) {
     return grammar.productions.every((production) => {
         if (production.rightSide.type == "twoVariables")
             return validateVariableName(production.rightSide.var1) && validateVariableName(production.rightSide.var2)
-                && production.rightSide.var1 != grammar.startSymbol && production.rightSide.var2 != grammar.startSymbol
+                && (!grammar.produceEpsilon || production.rightSide.var1 != grammar.startSymbol && production.rightSide.var2 != grammar.startSymbol)
         else
             return production.rightSide.char.length == 1
     })
